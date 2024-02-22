@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frontend - Carreras</title>
+</head>
+<body>
+  <h1>Carreras</h1>
+
+  <!-- Formulario para crear una nueva carrera -->
+  <h2>Nueva Carrera</h2>
+  <form id="createForm">
+    <label for="nombre">Nombre:</label>
+    <input type="text" id="nombre" name="nombre">
+    <label for="codigo">Código:</label>
+    <input type="text" id="codigo" name="codigo">
+    <label for="descripcion">Descripción:</label>
+    <input type="text" id="descripcion" name="descripcion">
+    <button type="submit">Crear Carrera</button>
+  </form>
+
+  <!-- Lista de carreras existentes -->
+  <h2>Listado de Carreras</h2>
+  <ul id="carrerasList"></ul>
+
+  <script>
+    // Función para cargar y mostrar las carreras
+    async function loadCarreras() {
+      const response = await fetch('http://localhost:3000/api/carreras');
+      const data = await response.json();
+
+      const carrerasList = document.getElementById('carrerasList');
+      carrerasList.innerHTML = ''; // Limpiar la lista antes de agregar nuevas carreras
+
+      data.forEach(carrera => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `
+          <strong>${carrera.nombre}</strong> (${carrera.codigo}) - ${carrera.descripcion}
+          <button onclick="editCarrera('${carrera._id}', '${carrera.nombre}', '${carrera.codigo}', '${carrera.descripcion}')">Editar</button>
+          <button onclick="deleteCarrera('${carrera._id}')">Eliminar</button>
+        `;
+        carrerasList.appendChild(listItem);
+      });
+    }
+
+    // Función para enviar una solicitud POST para crear una nueva carrera
+    async function createCarrera(event) {
+      event.preventDefault();
+
+      const form = event.target;
+      const data = {
+        nombre: form.nombre.value,
+        codigo: form.codigo.value,
+        descripcion: form.descripcion.value
+      };
+
+      const response = await fetch('http://localhost:3000/api/carreras', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok) {
+        // Recargar la lista de carreras después de crear una nueva
+        loadCarreras();
+        // Limpiar el formulario
+        form.reset();
+      } else {
+        console.error('Error al crear la carrera:', response.statusText);
+      }
+    }
+
+    // Función para enviar una solicitud DELETE para eliminar una carrera
+    async function deleteCarrera(id) {
+      const response = await fetch(`http://localhost:3000/api/carreras?id=${id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        // Recargar la lista de carreras después de eliminar
+        loadCarreras();
+      } else {
+        console.error('Error al eliminar la carrera:', response.statusText);
+      }
+    }
+
+    // Función para enviar una solicitud PUT para editar una carrera
+    async function editCarrera(id, nombre, codigo, descripcion) {
+      console.log('Editar carrera con ID:', id);
+      const nuevoNombre = prompt('Ingrese el nuevo nombre:', nombre);
+      const nuevoCodigo = prompt('Ingrese el nuevo código:', codigo);
+      const nuevaDescripcion = prompt('Ingrese la nueva descripción:', descripcion);
+
+      const data = {
+        nombre: nuevoNombre,
+        codigo: nuevoCodigo,
+        descripcion: nuevaDescripcion
+      };
+
+      const response = await fetch(`http://localhost:3000/api/carreras/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok) {
+        // Recargar la lista de carreras después de editar
+        loadCarreras();
+      } else {
+        console.error('Error al editar la carrera:', response.statusText);
+      }
+    }
+
+    // Cargar las carreras al cargar la página
+    loadCarreras();
+
+    // Agregar un evento de envío al formulario de creación
+    document.getElementById('createForm').addEventListener('submit', createCarrera);
+  </script>
+</body>
+</html>
